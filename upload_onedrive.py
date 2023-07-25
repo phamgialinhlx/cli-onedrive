@@ -1,8 +1,6 @@
 from argparse import ArgumentParser
 import os
 import json
-import time
-import random
 from tqdm import tqdm
 import requests
 from dotenv import load_dotenv

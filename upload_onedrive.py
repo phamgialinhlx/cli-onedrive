@@ -6,39 +6,14 @@ import random
 from tqdm import tqdm
 import requests
 from dotenv import load_dotenv
-from ms_graph.generate_access_token import generate_access_token
+from util.ms_graph.generate_access_token import generate_access_token
+from util.helper import retry_with_exponential_backoff
 
 load_dotenv()
 
 APP_ID:str = os.getenv('APP_ID')
 GRAPH_API_ENDPOINT = os.getenv('GRAPH_API_ENDPOINT')
 SCOPES = ['User.ReadWrite', 'Files.ReadWrite', 'Files.ReadWrite.All']
-
-def retry_with_exponential_backoff(
-    func,
-    initial_delay: float = 1,
-    exponential_base: float = 2,
-    jitter: bool = True,
-):
-    """Retry a function with exponential backoff."""
- 
-    def wrapper(*args, **kwargs):
-        # Initialize variables
-        delay = initial_delay
- 
-        # Loop until a successful response or max_retries is hit or an exception is raised
-        while True:
-            try:
-                return func(*args, **kwargs)
-            # Retry on specific errors
-            except Exception as e:
-                print("Exception: ", e)
-                # Increment the delay
-                delay *= exponential_base * (1 + jitter * random.random())
- 
-                # Sleep for the delay
-                time.sleep(delay)
-    return wrapper
 
 def get_folder_info(folder_path:str):
     results = []

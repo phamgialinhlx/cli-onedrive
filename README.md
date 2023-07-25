@@ -1,6 +1,6 @@
 ### Upload folder to OneDrive
 ```
-python src/upload_onedrive.py --input_folder <path_to_folder>
+python upload_onedrive.py --input_folder <path_to_folder>
 ```
 
 `path_to_folder`: true path to folder that you want to upload

@@ -165,3 +165,5 @@ cython_debug/
 /script/important_id.json
 /script/lastState.json
 /data/*.zip
+api_token_access.json
+important_id.json

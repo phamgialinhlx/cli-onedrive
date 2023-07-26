@@ -33,7 +33,7 @@ def generate_access_token(app_id, scopes):
 
 if __name__ == '__main__':
     APP_ID = os.getenv('APP_ID')
-    SCOPES = ['User.Read']
+    SCOPES = ['User.ReadWrite', 'Files.ReadWrite', 'Files.ReadWrite.All']
     print(APP_ID)
     token_response = generate_access_token(APP_ID, SCOPES)
     print(token_response['access_token'])

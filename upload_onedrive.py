@@ -142,7 +142,7 @@ def upload_folder(folder_path, bn_bar, drive_id, item_id):
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument("--input_folder", required=True, type=str, default="", help="Input folder path")
-
+    parser.add_argument("--item_id", type=str, default=None, help="Input item id")
     args = parser.parse_args()
 
     FOLDER_PATH = args.input_folder
@@ -150,7 +150,11 @@ if __name__ == '__main__':
     bn_bar = tqdm(total=len(folder_info), unit='BN', desc='Upload BN')
 
     info = json.load(open('important_id.json', 'r'))
-    item_id = info['KC_UTP_CT']['id'] 
-    drive_id = info['KC_UTP_CT']['drive_id']
+    if args.item_id is None:
+        item_id = info['ROOT']['id'] 
+    else:
+        item_id = args.item_id
+    
+    drive_id = info['ROOT']['drive_id']
     
     upload_folder(FOLDER_PATH, bn_bar, drive_id, item_id)

@@ -6,12 +6,14 @@ import requests
 from dotenv import load_dotenv
 from util.ms_graph.generate_access_token import generate_access_token
 from util.helper import retry_with_exponential_backoff
-from explorer import explore
+from explorer import explore_folder
 
 load_dotenv()
 
 APP_ID:str = os.getenv('APP_ID')
 GRAPH_API_ENDPOINT = os.getenv('GRAPH_API_ENDPOINT')
+ROOT_DRIVE_ID = os.getenv('ROOT_DRIVE_ID')
+ROOT_ITEM_ID = os.getenv('ROOT_ITEM_ID')
 SCOPES = ['User.ReadWrite', 'Files.ReadWrite', 'Files.ReadWrite.All']
 
 def get_folder_info(folder_path:str):
@@ -148,12 +150,11 @@ if __name__ == '__main__':
     FOLDER_PATH = args.input_folder
     folder_name = os.path.basename(FOLDER_PATH)
     folder_info = get_folder_info(FOLDER_PATH)
-    bn_bar = tqdm(total=len(folder_info), unit='BN', desc='Upload BN')
 
-    info = json.load(open('important_id.json', 'r'))
-    item_id = info['ROOT']['id'] 
-    drive_id = info['ROOT']['drive_id']
-    item_id = explore(drive_id, item_id)
+    item_id = ROOT_ITEM_ID
+    drive_id = ROOT_DRIVE_ID
+    item_id = explore_folder(drive_id, item_id)
     
     new_folder, new_folder_id = create_folder(folder_name, drive_id, item_id)
+    bn_bar = tqdm(total=len(folder_info), unit='BN', desc='Upload BN')
     upload_folder(FOLDER_PATH, bn_bar, drive_id, new_folder_id)

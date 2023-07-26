@@ -15,7 +15,7 @@ SCOPES = ['User.ReadWrite', 'Files.ReadWrite', 'Files.ReadWrite.All']
 
 stack_explore = []
 
-def explore(driveId, itemId, oldItemId=None):
+def explore_folder(driveId, itemId, oldItemId=None):
     access_token = generate_access_token(APP_ID, SCOPES)['access_token']
     headers = {
         'Authorization': 'Bearer ' + access_token
@@ -55,12 +55,64 @@ def explore(driveId, itemId, oldItemId=None):
         return folder_id
     else:
         clear_terminal()
-        return explore(driveId, folder_id, itemId)
+        return explore_folder(driveId, folder_id, itemId)
+
+def explore_file(driveId, itemId, oldItemId=None):
+    access_token = generate_access_token(APP_ID, SCOPES)['access_token']
+    headers = {
+        'Authorization': 'Bearer ' + access_token
+    }
+    response_upload_session = requests.get(
+        GRAPH_API_ENDPOINT + f'/drives/{driveId}/items/{itemId}/children', 
+        # GRAPH_API_ENDPOINT + f'/drives/{drive_id}/items/{folder_upload_id}/createUploadSession',  # lỗi ko thể tạo session on a folder
+        headers=headers,
+    )
+    value = response_upload_session.json()['value']
+    # print('value', value)
+    itemlist = [{
+        'name': '.',
+        'id': itemId,
+    }]
+    if oldItemId is not None:
+        itemlist.append({
+            'name': '..',
+            'id': oldItemId,
+        })
+    
+    folders = []
+
+    for x in value:
+        if 'folder' in x:
+            itemlist.append({
+                'name': x['name'] + '/',
+                'id': x['id']
+            })
+            folders.append(x['id'])
+        else:
+            itemlist.append({
+                'name': x['name'],
+                'id': x['id']
+            })
+    
+    for i, x in enumerate(itemlist):
+        print(i + 1, '|', x['id'], '|', x['name'])
+
+    choice = int(input('Enter the index: '))
+    item = itemlist[choice - 1]
+    if item['id'] in folders:
+        clear_terminal()
+        return explore_file(driveId, item['id'], itemId)
+    else:
+        clear_terminal()
+        return {
+            'itemId': x['id'],
+            'itemName': x['name']
+        }
 
 
 if __name__ == '__main__':
     info = json.load(open('important_id.json', 'r'))
     driveId = info['ROOT']['drive_id']
     itemId = info['ROOT']['id']
-    explore(driveId, itemId)
+    explore_folder(driveId, itemId)
     

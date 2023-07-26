@@ -1,16 +1,15 @@
 ### Upload folder to OneDrive
-```
-python upload_onedrive.py --input_folder <path_to_folder>
+```bash
+python src/upload_onedrive.py --input_folder <path_to_folder>
 ```
 
-`path_to_folder`: true path to folder that you want to upload
+`path_to_folder`: exact path to folder that you want to upload
 
-You should have `api_token_access.json` and `important_id.json` like this:
+
+### Download file from OneDrive
+```bash
+python src/download_file.py --destination_folder <path_to_destination_folder>
 ```
-{
-    "KC_UTP_CT":{
-        "id": "",
-        "drive_id": ""
-    }
-}
-```
+`path_to_destination_folder`: exact path to folder that you want to download to
+
+***Note***: Remember to create `.env` file and fill in the information as in the `.env.example` file

@@ -1,4 +1,5 @@
 import time
+import os
 import random
 
 def retry_with_exponential_backoff(
@@ -27,3 +28,10 @@ def retry_with_exponential_backoff(
                 time.sleep(delay)
     return wrapper
 
+def clear_terminal():
+    # For Windows
+    if os.name == 'nt':
+        os.system('cls')
+    # For UNIX-based systems (macOS, Linux)
+    else:
+        os.system('clear')

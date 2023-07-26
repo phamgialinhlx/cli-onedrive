@@ -6,6 +6,7 @@ import requests
 from dotenv import load_dotenv
 from util.ms_graph.generate_access_token import generate_access_token
 from util.helper import retry_with_exponential_backoff
+from explorer import explore
 
 load_dotenv()
 
@@ -142,19 +143,17 @@ def upload_folder(folder_path, bn_bar, drive_id, item_id):
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument("--input_folder", required=True, type=str, default="", help="Input folder path")
-    parser.add_argument("--item_id", type=str, default=None, help="Input item id")
     args = parser.parse_args()
 
     FOLDER_PATH = args.input_folder
+    folder_name = os.path.basename(FOLDER_PATH)
     folder_info = get_folder_info(FOLDER_PATH)
     bn_bar = tqdm(total=len(folder_info), unit='BN', desc='Upload BN')
 
     info = json.load(open('important_id.json', 'r'))
-    if args.item_id is None:
-        item_id = info['ROOT']['id'] 
-    else:
-        item_id = args.item_id
-    
+    item_id = info['ROOT']['id'] 
     drive_id = info['ROOT']['drive_id']
+    item_id = explore(drive_id, item_id)
     
-    upload_folder(FOLDER_PATH, bn_bar, drive_id, item_id)
+    new_folder, new_folder_id = create_folder(folder_name, drive_id, item_id)
+    upload_folder(FOLDER_PATH, bn_bar, drive_id, new_folder_id)

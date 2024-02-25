@@ -59,7 +59,7 @@ def upload_file(bn_bar, folder_upload_id, drive_id, file_name, folder_path):
     file_path = os.path.join(folder_path, file_name)
     with open(file_path, 'rb') as f:
         total_file_size = os.path.getsize(file_path)
-        chunk_size = 327680
+        chunk_size = 3276800
         chunk_number = total_file_size//chunk_size
         chunk_left_over = total_file_size - chunk_number*chunk_size
         counter =0
@@ -113,22 +113,26 @@ def create_folder(name, drive_id, item_id):
         json=data_post
     )
     response = response.json()
-    if response.get('error').get('code') == 'nameAlreadyExists':
-        response = requests.get(
-            GRAPH_API_ENDPOINT + f'/drives/{drive_id}/items/{item_id}/children', 
-            headers=headers, 
-        )
-        response = response.json()
-        for item in response['value']:
-            if item['name'] == name:
-                folder_bn_id_created = item['name']
-                folder_created_id = item['id']
+    if response.get('error'):
+        if response.get('error').get('code') == 'nameAlreadyExists':
+            response = requests.get(
+                GRAPH_API_ENDPOINT + f'/drives/{drive_id}/items/{item_id}/children', 
+                headers=headers, 
+            )
+            response = response.json()
+            for item in response['value']:
+                if item['name'] == name:
+                    folder_bn_id_created = item['name']
+                    folder_created_id = item['id']
+        else:
+            folder_bn_id_created = response['name']
+            folder_created_id = response['id']
     else:
         folder_bn_id_created = response['name']
         folder_created_id = response['id']
     return folder_bn_id_created, folder_created_id
 
-# @retry_with_exponential_backoff
+@retry_with_exponential_backoff
 def upload_folder(folder_path, bn_bar, drive_id, item_id):
 
     # for root, dirs, files in os.walk(folder_path):
@@ -148,6 +152,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     FOLDER_PATH = args.input_folder
+    if FOLDER_PATH[-1] == "/":
+        FOLDER_PATH = FOLDER_PATH[:-1]
     folder_name = os.path.basename(FOLDER_PATH)
     folder_info = get_folder_info(FOLDER_PATH)
 

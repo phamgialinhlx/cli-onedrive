@@ -37,3 +37,4 @@ if __name__ == '__main__':
     print(APP_ID)
     token_response = generate_access_token(APP_ID, SCOPES)
     print(token_response['access_token'])
+    

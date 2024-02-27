@@ -115,40 +115,71 @@ def create_folder(name, drive_id, item_id):
     response = response.json()
     if response.get('error'):
         if response.get('error').get('code') == 'nameAlreadyExists':
-            response = requests.get(
-                GRAPH_API_ENDPOINT + f'/drives/{drive_id}/items/{item_id}/children', 
-                headers=headers, 
-            )
-            response = response.json()
-            for item in response['value']:
-                if item['name'] == name:
-                    folder_bn_id_created = item['name']
-                    folder_created_id = item['id']
+            link = GRAPH_API_ENDPOINT + f'/drives/{drive_id}/items/{item_id}/children'
+            while True:
+                response = requests.get(
+                    link, 
+                    headers=headers, 
+                )
+                response = response.json()
+                for item in response['value']:
+                    if item['name'] == name:
+                        folder_bn_id_created = item['name']
+                        folder_created_id = item['id']
+                if '@odata.nextLink' not in response.keys():
+                    break
+                else:
+                    link = response['@odata.nextLink']
+                    continue
         else:
-            folder_bn_id_created = response['name']
-            folder_created_id = response['id']
+            print(response)
+            raise Exception(response)
     else:
         folder_bn_id_created = response['name']
         folder_created_id = response['id']
     return folder_bn_id_created, folder_created_id
 
 @retry_with_exponential_backoff
-def upload_folder(folder_path, bn_bar, drive_id, item_id):
+def upload_folder(folder_path, bn_bar, drive_id, item_id, overwrite):
 
     # for root, dirs, files in os.walk(folder_path):
     folder_info = list_dir(folder_path)
     dirs = folder_info['dirs']
     files = folder_info['files']
-
+    
+    access_token = generate_access_token(APP_ID, SCOPES)['access_token']
+    headers = {
+        'Authorization': 'Bearer ' + access_token
+    }
+    
+    response_existing_file = requests.get(
+        GRAPH_API_ENDPOINT + f'/drives/{drive_id}/items/{item_id}/children', 
+        headers=headers,
+    )
+    
+    response_existing_file = response_existing_file.json()
+    existing_files = []
+    for item in response_existing_file['value']:
+        if 'file' in item.keys():
+            existing_files.append(item['name'])
+            
     for file in files:
-        upload_file(bn_bar, item_id, drive_id, file, folder_path)
+        if overwrite:
+            if file not in existing_files:
+                upload_file(bn_bar, item_id, drive_id, file, folder_path)
+            else:
+                print(f'{file} already exists')
+        else:
+            upload_file(bn_bar, item_id, drive_id, file, folder_path)
+
     for dir in dirs:
         folder_bn_id_created, folder_created_id = create_folder(dir, drive_id, item_id)
-        upload_folder(os.path.join(folder_path, dir), bn_bar, drive_id, folder_created_id)
+        upload_folder(os.path.join(folder_path, dir), bn_bar, drive_id, folder_created_id, overwrite)
 
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument("--input_folder", required=True, type=str, default="", help="Input folder path")
+    parser.add_argument('--overwrite', action="store_true", help='Whether to overwrite existing files')
     args = parser.parse_args()
 
     FOLDER_PATH = args.input_folder
@@ -163,4 +194,4 @@ if __name__ == '__main__':
     
     new_folder, new_folder_id = create_folder(folder_name, drive_id, item_id)
     bn_bar = tqdm(total=len(folder_info), unit='BN', desc='Upload BN')
-    upload_folder(FOLDER_PATH, bn_bar, drive_id, new_folder_id)
+    upload_folder(FOLDER_PATH, bn_bar, drive_id, new_folder_id, args.overwrite)
